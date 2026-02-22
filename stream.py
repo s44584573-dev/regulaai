@@ -1,6 +1,10 @@
 # ==========================================================
-# IMPORTS
+# RegulaAI – FULL FINAL VERSION (LOCAL + CLOUD SAFE)
 # ==========================================================
+
+# =====================
+# IMPORTS
+# =====================
 
 import streamlit as st
 import PyPDF2
@@ -9,23 +13,55 @@ import io
 import smtplib
 import matplotlib.pyplot as plt
 
-from dotenv import load_dotenv
 from groq import Groq
 from email.message import EmailMessage
 from reportlab.lib.pagesizes import A4
 from reportlab.pdfgen import canvas
+from dotenv import load_dotenv
 
 
-# ==========================================================
+# =====================
 # LOAD ENV
-# ==========================================================
+# =====================
 
 load_dotenv()
 
 
-# ==========================================================
-# LOGIN SYSTEM (ONLY ONCE)
-# ==========================================================
+# =====================
+# LOAD SECRETS SAFE (NO ERROR)
+# =====================
+
+try:
+
+    APP_USER = st.secrets["APP_USER"]
+    APP_PASSWORD = st.secrets["APP_PASSWORD"]
+
+    GROQ_KEY = st.secrets["GROQ_API_KEY"]
+
+    EMAIL = st.secrets["SENDER_EMAIL"]
+    PASSWORD = st.secrets["SENDER_PASSWORD"]
+
+except:
+
+    APP_USER = os.getenv("APP_USER")
+    APP_PASSWORD = os.getenv("APP_PASSWORD")
+
+    GROQ_KEY = os.getenv("GROQ_API_KEY")
+
+    EMAIL = os.getenv("SENDER_EMAIL")
+    PASSWORD = os.getenv("SENDER_PASSWORD")
+
+
+# =====================
+# CREATE GROQ CLIENT
+# =====================
+
+client = Groq(api_key=GROQ_KEY)
+
+
+# =====================
+# LOGIN SYSTEM
+# =====================
 
 if "logged_in" not in st.session_state:
 
@@ -42,19 +78,11 @@ def login():
 
     if st.button("Login"):
 
-        if (
-
-            username == os.getenv("APP_USER")
-
-            and
-
-            password == os.getenv("APP_PASSWORD")
-
-        ):
+        if username == APP_USER and password == APP_PASSWORD:
 
             st.session_state.logged_in = True
 
-            st.success("Login Successful")
+            st.success("Login successful")
 
             st.rerun()
 
@@ -80,24 +108,9 @@ if not st.session_state.logged_in:
 st.sidebar.button("Logout", on_click=logout)
 
 
-# ==========================================================
-# NOW START YOUR MAIN APP
-# ==========================================================
-
-
-# API Keys
-
-GROQ_KEY = os.getenv("GROQ_API_KEY")
-
-EMAIL = os.getenv("SENDER_EMAIL")
-
-PASSWORD = os.getenv("SENDER_PASSWORD")
-
-
-client = Groq(api_key=GROQ_KEY)
-
-
-# PAGE
+# =====================
+# PAGE SETTINGS
+# =====================
 
 st.set_page_config(page_title="RegulaAI", layout="wide")
 
@@ -106,7 +119,9 @@ st.title("✅ RegulaAI – AI Compliance Checker")
 st.caption("AI-Powered Regulatory Compliance Platform")
 
 
-# SESSION
+# =====================
+# SESSION VARIABLES
+# =====================
 
 if "contract" not in st.session_state:
 
@@ -121,69 +136,9 @@ if "improved" not in st.session_state:
     st.session_state.improved = ""
 
 
-# (Rest of your existing code continues below)
-
-
-# ==========================================================
-# RegulaAI – FINAL IDEATHON VERSION
-# AI Compliance Checker + Report + Email + Chatbot
-# ==========================================================
-
-import streamlit as st
-import PyPDF2
-import os
-import io
-import smtplib
-import matplotlib.pyplot as plt
-
-from dotenv import load_dotenv
-from groq import Groq
-from email.message import EmailMessage
-from reportlab.lib.pagesizes import A4
-from reportlab.pdfgen import canvas
-
-
-# ==========================================================
-# LOAD ENV
-# ==========================================================
-
-load_dotenv()
-
-GROQ_KEY = os.getenv("GROQ_API_KEY")
-EMAIL = os.getenv("SENDER_EMAIL")
-PASSWORD = os.getenv("SENDER_PASSWORD")
-
-client = Groq(api_key=GROQ_KEY)
-
-
-# ==========================================================
-# PAGE
-# ==========================================================
-
-st.set_page_config(page_title="RegulaAI", layout="wide")
-
-st.title("✅ RegulaAI – AI Compliance Checker")
-
-st.caption("AI-Powered Regulatory Compliance Platform")
-
-
-# ==========================================================
-# SESSION
-# ==========================================================
-
-if "contract" not in st.session_state:
-    st.session_state.contract = ""
-
-if "chat" not in st.session_state:
-    st.session_state.chat = []
-
-if "improved" not in st.session_state:
-    st.session_state.improved = ""
-
-
-# ==========================================================
-# PDF READ
-# ==========================================================
+# =====================
+# PDF READER
+# =====================
 
 def read_pdf(file):
 
@@ -198,9 +153,9 @@ def read_pdf(file):
     return text
 
 
-# ==========================================================
+# =====================
 # RISK ANALYSIS
-# ==========================================================
+# =====================
 
 def risk_analysis(text):
 
@@ -211,31 +166,43 @@ def risk_analysis(text):
     text = text.lower()
 
     if "termination" in text:
+
         score += 20
+
         risks.append("Termination clause present")
+
     else:
+
         risks.append("Termination clause missing")
 
     if "liability" in text:
+
         score += 25
+
         risks.append("Liability clause present")
+
     else:
+
         risks.append("Liability clause missing")
 
     if "indemn" in text:
+
         score += 20
+
         risks.append("Indemnification clause present")
 
     if "gdpr" not in text:
+
         score += 15
+
         risks.append("GDPR compliance missing")
 
     return score, risks
 
 
-# ==========================================================
+# =====================
 # GENERATE PDF REPORT
-# ==========================================================
+# =====================
 
 def generate_report(contract, score, risks):
 
@@ -266,9 +233,9 @@ def generate_report(contract, score, risks):
     return buffer
 
 
-# ==========================================================
+# =====================
 # SEND EMAIL
-# ==========================================================
+# =====================
 
 def send_email(receiver, pdf):
 
@@ -301,9 +268,9 @@ def send_email(receiver, pdf):
         smtp.send_message(msg)
 
 
-# ==========================================================
+# =====================
 # AI CHATBOT
-# ==========================================================
+# =====================
 
 def ask_ai(question):
 
@@ -314,11 +281,9 @@ def ask_ai(question):
 You are legal compliance AI.
 
 Contract:
-
 {contract[:6000]}
 
 Question:
-
 {question}
 
 Answer professionally:
@@ -336,15 +301,15 @@ Answer professionally:
     return response.choices[0].message.content
 
 
-# ==========================================================
+# =====================
 # IMPROVE CONTRACT
-# ==========================================================
+# =====================
 
 def improve_contract():
 
     prompt = f"""
 
-Improve this contract and make it compliant:
+Improve this contract:
 
 {st.session_state.contract[:6000]}
 
@@ -361,9 +326,9 @@ Improve this contract and make it compliant:
     return response.choices[0].message.content
 
 
-# ==========================================================
+# =====================
 # SIDEBAR
-# ==========================================================
+# =====================
 
 page = st.sidebar.radio(
 
@@ -384,9 +349,9 @@ page = st.sidebar.radio(
 )
 
 
-# ==========================================================
+# =====================
 # UPLOAD PAGE
-# ==========================================================
+# =====================
 
 if page == "Upload Contract":
 
@@ -396,12 +361,12 @@ if page == "Upload Contract":
 
         st.session_state.contract = read_pdf(file)
 
-        st.success("Contract Uploaded")
+        st.success("Contract uploaded successfully")
 
 
-# ==========================================================
+# =====================
 # RISK DASHBOARD
-# ==========================================================
+# =====================
 
 elif page == "Risk Dashboard":
 
@@ -420,34 +385,33 @@ elif page == "Risk Dashboard":
         st.pyplot(fig)
 
         for r in risks:
-            st.error(r)
 
-        st.subheader("Send Compliance Report")
+            st.error(r)
 
         email = st.text_input("Enter Email")
 
-        if st.button("Generate & Send Report"):
+        if st.button("Send Report"):
 
             pdf = generate_report(contract, score, risks)
 
             send_email(email, pdf)
 
-            st.success("Report Sent Successfully")
+            st.success("Report sent successfully")
 
 
-# ==========================================================
+# =====================
 # CHATBOT
-# ==========================================================
+# =====================
 
 elif page == "Compliance Chatbot":
 
-    q = st.text_input("Ask Question")
+    question = st.text_input("Ask question")
 
     if st.button("Ask"):
 
-        a = ask_ai(q)
+        answer = ask_ai(question)
 
-        st.session_state.chat.append((q, a))
+        st.session_state.chat.append((question, answer))
 
     for q, a in reversed(st.session_state.chat):
 
@@ -456,16 +420,14 @@ elif page == "Compliance Chatbot":
         st.write("AI:", a)
 
 
-# ==========================================================
+# =====================
 # IMPROVE CONTRACT
-# ==========================================================
+# =====================
 
 elif page == "Improve Contract":
 
     if st.button("Generate Improved Contract"):
 
-        improved = improve_contract()
-
-        st.session_state.improved = improved
+        st.session_state.improved = improve_contract()
 
     st.text_area("Improved Contract", st.session_state.improved, height=400)
